@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../domain/entities/task_entity.dart';
 import '../providers/task_provider.dart';
 
 class TaskListPage extends ConsumerStatefulWidget {
@@ -18,6 +19,82 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
     Future.microtask(() {
       ref.read(taskProvider.notifier).loadTasks();
     });
+  }
+
+  Future<void> _showCreateTaskSheet(BuildContext context) async {
+    final titleController = TextEditingController();
+    final descriptionController = TextEditingController();
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Create Task',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: descriptionController,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 3,
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () async {
+                    final title = titleController.text.trim();
+                    final description = descriptionController.text.trim();
+
+                    if (title.isEmpty) {
+                      return;
+                    }
+
+                    final task = TaskEntity(
+                      title: title,
+                      description:
+                          description.isEmpty ? null : description,
+                    );
+
+                    await ref.read(taskProvider.notifier).createTask(task);
+
+                    if (context.mounted) {
+                      Navigator.of(context).pop();
+                    }
+                  },
+                  child: const Text('Create'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    titleController.dispose();
+    descriptionController.dispose();
   }
 
   @override
@@ -91,6 +168,10 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
             },
           );
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showCreateTaskSheet(context),
+        child: const Icon(Icons.add),
       ),
     );
   }
