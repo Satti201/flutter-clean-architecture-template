@@ -27,17 +27,25 @@ class TaskRepositoryImpl implements TaskRepository {
   }
 
   @override
-  Future<TaskEntity?> getTaskById(String id) {
-    throw UnimplementedError();
+  Future<TaskEntity?> getTaskById(String id) async {
+    final taskModel = await remoteDataSource.getTaskById(id);
+    return taskModel;
   }
 
   @override
-  Future<void> updateTask(TaskEntity task) {
-    throw UnimplementedError();
+  Future<void> updateTask(TaskEntity task) async {
+    final taskModel = TaskModel(
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      isCompleted: task.isCompleted,
+    );
+
+    await remoteDataSource.updateTask(taskModel);
   }
 
   @override
-  Future<void> deleteTask(String id) {
-    throw UnimplementedError();
+  Future<void> deleteTask(String id) async {
+    await remoteDataSource.deleteTask(id);
   }
 }
