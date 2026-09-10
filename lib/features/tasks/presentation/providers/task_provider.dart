@@ -23,6 +23,10 @@ final deleteTaskUseCaseProvider = Provider<DeleteTaskUseCase>((ref) {
   return Injection.deleteTaskUseCase;
 });
 
+final taskActionProvider = StateProvider<AsyncValue<void>>(
+  (ref) => const AsyncValue.data(null),
+);
+
 class TaskNotifier extends StateNotifier<AsyncValue<List<TaskEntity>>> {
   final GetTasksUseCase getTasksUseCase;
   final CreateTaskUseCase createTaskUseCase;
@@ -45,30 +49,21 @@ class TaskNotifier extends StateNotifier<AsyncValue<List<TaskEntity>>> {
   }
 
   Future<void> createTask(TaskEntity task) async {
-    state = const AsyncValue.loading();
-
-    state = await AsyncValue.guard(() async {
-      await createTaskUseCase(task);
-      return getTasksUseCase();
-    });
+    await createTaskUseCase(task);
+    final tasks = await getTasksUseCase();
+    state = AsyncValue.data(tasks);
   }
 
   Future<void> updateTask(TaskEntity task) async {
-    state = const AsyncValue.loading();
-
-    state = await AsyncValue.guard(() async {
-      await updateTaskUseCase(task);
-      return getTasksUseCase();
-    });
+    await updateTaskUseCase(task);
+    final tasks = await getTasksUseCase();
+    state = AsyncValue.data(tasks);
   }
 
   Future<void> deleteTask(String id) async {
-    state = const AsyncValue.loading();
-
-    state = await AsyncValue.guard(() async {
-      await deleteTaskUseCase(id);
-      return getTasksUseCase();
-    });
+    await deleteTaskUseCase(id);
+    final tasks = await getTasksUseCase();
+    state = AsyncValue.data(tasks);
   }
 }
 
