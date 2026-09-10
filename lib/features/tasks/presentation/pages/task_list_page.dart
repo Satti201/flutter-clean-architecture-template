@@ -22,6 +22,27 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
     });
   }
 
+  Future<bool> _runTaskAction(
+    Future<void> Function() action,
+  ) async {
+    ref.read(taskActionProvider.notifier).state =
+        const AsyncValue.loading();
+
+    try {
+      await action();
+
+      ref.read(taskActionProvider.notifier).state =
+          const AsyncValue.data(null);
+
+      return true;
+    } catch (error, stackTrace) {
+      ref.read(taskActionProvider.notifier).state =
+          AsyncValue.error(error, stackTrace);
+
+      return false;
+    }
+  }
+
   Future<void> _showCreateTaskSheet(BuildContext context) async {
     await showModalBottomSheet<void>(
       context: context,
@@ -35,6 +56,25 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
   @override
   Widget build(BuildContext context) {
     final taskState = ref.watch(taskProvider);
+
+    ref.listen<AsyncValue<void>>(
+      taskActionProvider,
+      (previous, next) {
+        next.whenOrNull(
+          error: (error, stackTrace) {
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Action failed: $error',
+                  ),
+                ),
+              );
+          },
+        );
+      },
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -105,9 +145,11 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                             isCompleted: !task.isCompleted,
                           );
 
-                          await ref
-                              .read(taskProvider.notifier)
-                              .updateTask(updatedTask);
+                          await _runTaskAction(
+                            () => ref
+                                .read(taskProvider.notifier)
+                                .updateTask(updatedTask),
+                          );
                         },
                         icon: Icon(
                           task.isCompleted
@@ -119,9 +161,11 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                         onPressed: task.id == null
                             ? null
                             : () async {
-                                await ref
-                                    .read(taskProvider.notifier)
-                                    .deleteTask(task.id!);
+                                await _runTaskAction(
+                                  () => ref
+                                      .read(taskProvider.notifier)
+                                      .deleteTask(task.id!),
+                                );
                               },
                         icon: const Icon(Icons.delete_outline),
                       ),

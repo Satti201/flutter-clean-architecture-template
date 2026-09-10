@@ -35,17 +35,40 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
       description: description.isEmpty ? null : description,
     );
 
-    await ref.read(taskProvider.notifier).createTask(task);
+    ref.read(taskActionProvider.notifier).state =
+        const AsyncValue.loading();
 
-    if (!mounted) {
-      return;
+    try {
+      await ref.read(taskProvider.notifier).createTask(task);
+
+      ref.read(taskActionProvider.notifier).state =
+          const AsyncValue.data(null);
+
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    } catch (error, stackTrace) {
+      ref.read(taskActionProvider.notifier).state =
+          AsyncValue.error(error, stackTrace);
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Could not create task: $error',
+          ),
+        ),
+      );
     }
-
-    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
+    final actionState = ref.watch(taskActionProvider);
+
     return SingleChildScrollView(
       padding: EdgeInsets.only(
         left: 16,
@@ -81,8 +104,16 @@ class _CreateTaskSheetState extends ConsumerState<CreateTaskSheet> {
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: _createTask,
-              child: const Text('Create'),
+              onPressed: actionState.isLoading ? null : _createTask,
+              child: actionState.isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text('Create'),
             ),
           ),
         ],
