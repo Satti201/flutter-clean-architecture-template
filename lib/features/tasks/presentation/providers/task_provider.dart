@@ -52,6 +52,24 @@ class TaskNotifier extends StateNotifier<AsyncValue<List<TaskEntity>>> {
       return getTasksUseCase();
     });
   }
+
+  Future<void> updateTask(TaskEntity task) async {
+    state = const AsyncValue.loading();
+
+    state = await AsyncValue.guard(() async {
+      await updateTaskUseCase(task);
+      return getTasksUseCase();
+    });
+  }
+
+  Future<void> deleteTask(String id) async {
+    state = const AsyncValue.loading();
+
+    state = await AsyncValue.guard(() async {
+      await deleteTaskUseCase(id);
+      return getTasksUseCase();
+    });
+  }
 }
 
 final taskProvider = StateNotifierProvider<
