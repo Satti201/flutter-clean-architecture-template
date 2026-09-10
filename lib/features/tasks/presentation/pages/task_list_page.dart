@@ -158,10 +158,39 @@ class _TaskListPageState extends ConsumerState<TaskListPage> {
                   subtitle: task.description == null
                       ? null
                       : Text(task.description!),
-                  trailing: Icon(
-                    task.isCompleted
-                        ? Icons.check_circle
-                        : Icons.radio_button_unchecked,
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        onPressed: () async {
+                          final updatedTask = TaskEntity(
+                            id: task.id,
+                            title: task.title,
+                            description: task.description,
+                            isCompleted: !task.isCompleted,
+                          );
+
+                          await ref
+                              .read(taskProvider.notifier)
+                              .updateTask(updatedTask);
+                        },
+                        icon: Icon(
+                          task.isCompleted
+                              ? Icons.check_circle
+                              : Icons.radio_button_unchecked,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: task.id == null
+                            ? null
+                            : () async {
+                                await ref
+                                    .read(taskProvider.notifier)
+                                    .deleteTask(task.id!);
+                              },
+                        icon: const Icon(Icons.delete_outline),
+                      ),
+                    ],
                   ),
                 ),
               );
