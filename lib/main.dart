@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/di/injection.dart';
+import 'features/tasks/presentation/pages/task_list_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,11 +27,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Clean Architecture Tasks',
-      home: const Scaffold(
-        body: Center(
-          child: Text('Clean Architecture Tasks'),
-        ),
-      ),
+      home: const TaskListPage(),
     );
   }
 }
