@@ -5,43 +5,36 @@ import '../../domain/repositories/task_repository.dart';
 import '../datasources/task_remote_datasource.dart';
 import '../models/task_model.dart';
 
+enum _TaskOperation {
+  create,
+  read,
+  update,
+  delete,
+}
+
 class TaskRepositoryImpl implements TaskRepository {
   final TaskRemoteDataSource remoteDataSource;
 
   TaskRepositoryImpl(this.remoteDataSource);
 
-  @override
-  Future<void> createTask(TaskEntity task) async {
-    final taskModel = TaskModel(
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      isCompleted: task.isCompleted,
-    );
-
+  Future<T> _handleDataOperation<T>(
+    Future<T> Function() action,
+    _TaskOperation operation,
+  ) async {
     try {
-      await remoteDataSource.createTask(taskModel);
+      return await action();
     } on DataException catch (error) {
       throw TaskException(
-        _mapDataExceptionMessage(error),
+        _mapDataExceptionMessage(
+          error,
+          operation,
+        ),
       );
     }
   }
 
   @override
-  Future<List<TaskEntity>> getTasks() async {
-    final taskModels = await remoteDataSource.getTasks();
-    return taskModels;
-  }
-
-  @override
-  Future<TaskEntity?> getTaskById(String id) async {
-    final taskModel = await remoteDataSource.getTaskById(id);
-    return taskModel;
-  }
-
-  @override
-  Future<void> updateTask(TaskEntity task) async {
+  Future<void> createTask(TaskEntity task) {
     final taskModel = TaskModel(
       id: task.id,
       title: task.title,
@@ -49,18 +42,61 @@ class TaskRepositoryImpl implements TaskRepository {
       isCompleted: task.isCompleted,
     );
 
-    await remoteDataSource.updateTask(taskModel);
+    return _handleDataOperation(
+      () => remoteDataSource.createTask(taskModel),
+      _TaskOperation.create,
+    );
   }
 
   @override
-  Future<void> deleteTask(String id) async {
-    await remoteDataSource.deleteTask(id);
+  Future<List<TaskEntity>> getTasks() {
+    return _handleDataOperation(
+      () async {
+        final taskModels = await remoteDataSource.getTasks();
+        return taskModels;
+      },
+      _TaskOperation.read,
+    );
   }
 
-  String _mapDataExceptionMessage(DataException error) {
+  @override
+  Future<TaskEntity?> getTaskById(String id) {
+    return _handleDataOperation(
+      () => remoteDataSource.getTaskById(id),
+      _TaskOperation.read,
+    );
+  }
+
+  @override
+  Future<void> updateTask(TaskEntity task) {
+    final taskModel = TaskModel(
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      isCompleted: task.isCompleted,
+    );
+
+    return _handleDataOperation(
+      () => remoteDataSource.updateTask(taskModel),
+      _TaskOperation.update,
+    );
+  }
+
+  @override
+  Future<void> deleteTask(String id) {
+    return _handleDataOperation(
+      () => remoteDataSource.deleteTask(id),
+      _TaskOperation.delete,
+    );
+  }
+
+  String _mapDataExceptionMessage(
+    DataException error,
+    _TaskOperation operation,
+  ) {
     switch (error.code) {
       case 'permission-denied':
-        return 'You do not have permission to create this task';
+        return 'You do not have permission to perform this action';
 
       case 'unavailable':
         return 'Task service is currently unavailable. Please try again';
@@ -69,7 +105,16 @@ class TaskRepositoryImpl implements TaskRepository {
         return 'Please check your internet connection';
 
       default:
-        return 'Unable to create task. Please try again';
+        return switch (operation) {
+          _TaskOperation.create =>
+            'Unable to create task. Please try again',
+          _TaskOperation.read =>
+            'Unable to load tasks. Please try again',
+          _TaskOperation.update =>
+            'Unable to update task. Please try again',
+          _TaskOperation.delete =>
+            'Unable to delete task. Please try again',
+        };
     }
   }
 }

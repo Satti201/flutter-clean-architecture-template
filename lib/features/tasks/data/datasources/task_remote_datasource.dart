@@ -20,60 +20,97 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
 
   TaskRemoteDataSourceImpl(this.firestore);
 
-  @override
-  Future<void> createTask(TaskModel task) async {
+  Future<T> _handleFirebaseCall<T>(
+    Future<T> Function() action, {
+    required String fallbackMessage,
+  }) async {
     try {
-      await firestore.collection('tasks').add(task.toJson());
+      return await action();
     } on FirebaseException catch (error) {
       throw DataException(
-        message: error.message ?? 'Failed to create task',
+        message: error.message ?? fallbackMessage,
         code: error.code,
       );
     }
   }
 
   @override
-  Future<List<TaskModel>> getTasks() async {
-    final snapshot = await firestore.collection('tasks').get();
-
-    return snapshot.docs.map((doc) {
-      return TaskModel.fromJson({
-        ...doc.data(),
-        'id': doc.id,
-      });
-    }).toList();
+  Future<void> createTask(TaskModel task) {
+    return _handleFirebaseCall(
+      () async {
+        await firestore.collection('tasks').add(task.toJson());
+      },
+      fallbackMessage: 'Failed to create task',
+    );
   }
 
   @override
-  Future<TaskModel?> getTaskById(String id) async {
-    final doc = await firestore.collection('tasks').doc(id).get();
+  Future<List<TaskModel>> getTasks() {
+    return _handleFirebaseCall(
+      () async {
+        final snapshot = await firestore.collection('tasks').get();
 
-    if (!doc.exists) {
-      return null;
-    }
-
-    return TaskModel.fromJson({
-      ...doc.data()!,
-      'id': doc.id,
-    });
+        return snapshot.docs.map((doc) {
+          return TaskModel.fromJson({
+            ...doc.data(),
+            'id': doc.id,
+          });
+        }).toList();
+      },
+      fallbackMessage: 'Failed to load tasks',
+    );
   }
 
   @override
-  Future<void> updateTask(TaskModel task) async {
+  Future<TaskModel?> getTaskById(String id) {
+    return _handleFirebaseCall(
+      () async {
+        final doc = await firestore.collection('tasks').doc(id).get();
+
+        if (!doc.exists) {
+          return null;
+        }
+
+        return TaskModel.fromJson({
+          ...doc.data()!,
+          'id': doc.id,
+        });
+      },
+      fallbackMessage: 'Failed to load task',
+    );
+  }
+
+  @override
+  Future<void> updateTask(TaskModel task) {
     final id = task.id;
+
     if (id == null || id.isEmpty) {
-      throw ArgumentError('Cannot update a task without an ID');
+      throw ArgumentError(
+        'Cannot update a task without an ID',
+      );
     }
 
-    await firestore.collection('tasks').doc(id).update(task.toJson());
+    return _handleFirebaseCall(
+      () async {
+        await firestore.collection('tasks').doc(id).update(task.toJson());
+      },
+      fallbackMessage: 'Failed to update task',
+    );
   }
 
   @override
-  Future<void> deleteTask(String id) async {
+  Future<void> deleteTask(String id) {
     if (id.isEmpty) {
-      throw ArgumentError('Cannot delete a task with an empty ID');
+      throw ArgumentError(
+        'Cannot delete a task with an empty ID',
+      );
     }
 
-    await firestore.collection('tasks').doc(id).delete();
+    return _handleFirebaseCall(
+      () async {
+        await firestore.collection('tasks').doc(id).delete();
+      },
+      fallbackMessage: 'Failed to delete task',
+    );
   }
 }
