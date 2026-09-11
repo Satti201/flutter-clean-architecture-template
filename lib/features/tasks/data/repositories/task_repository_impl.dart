@@ -1,4 +1,6 @@
+import '../../../../core/error/data_exception.dart';
 import '../../domain/entities/task_entity.dart';
+import '../../domain/exceptions/task_exception.dart';
 import '../../domain/repositories/task_repository.dart';
 import '../datasources/task_remote_datasource.dart';
 import '../models/task_model.dart';
@@ -17,7 +19,13 @@ class TaskRepositoryImpl implements TaskRepository {
       isCompleted: task.isCompleted,
     );
 
-    await remoteDataSource.createTask(taskModel);
+    try {
+      await remoteDataSource.createTask(taskModel);
+    } on DataException catch (error) {
+      throw TaskException(
+        _mapDataExceptionMessage(error),
+      );
+    }
   }
 
   @override
@@ -47,5 +55,21 @@ class TaskRepositoryImpl implements TaskRepository {
   @override
   Future<void> deleteTask(String id) async {
     await remoteDataSource.deleteTask(id);
+  }
+
+  String _mapDataExceptionMessage(DataException error) {
+    switch (error.code) {
+      case 'permission-denied':
+        return 'You do not have permission to create this task';
+
+      case 'unavailable':
+        return 'Task service is currently unavailable. Please try again';
+
+      case 'network-request-failed':
+        return 'Please check your internet connection';
+
+      default:
+        return 'Unable to create task. Please try again';
+    }
   }
 }
