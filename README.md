@@ -8,6 +8,12 @@ The goal of this repository is not to showcase a complex product. It is to show 
 
 ---
 
+## Demo
+
+![Task Manager](docs/screenshots/task-list.png)
+
+---
+
 ## Architecture
 
 The project follows a feature-first Clean Architecture structure.
