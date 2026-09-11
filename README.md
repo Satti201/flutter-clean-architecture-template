@@ -209,6 +209,16 @@ dart analyze
 
 ---
 
+## Firebase Configuration
+
+This project uses Firebase Firestore as the remote data source.
+
+Firebase client configuration is not treated as a secret. Access control must be enforced through Firebase Security Rules.
+
+The permissive rules used during local development/testing are not intended for production use. A production application should configure authentication and restrictive Firestore rules appropriate to its domain.
+
+---
+
 ## Key Architectural Decisions
 
 ### Why separate `TaskEntity` and `TaskModel`?
@@ -256,6 +266,12 @@ It demonstrates:
 - Predictable state management
 - Explicit dependency composition
 - Production-oriented Flutter organization
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
