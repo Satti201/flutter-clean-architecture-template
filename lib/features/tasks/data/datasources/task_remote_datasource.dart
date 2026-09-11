@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../../../core/error/data_exception.dart';
 import '../models/task_model.dart';
 
 abstract class TaskRemoteDataSource {
@@ -21,7 +22,14 @@ class TaskRemoteDataSourceImpl implements TaskRemoteDataSource {
 
   @override
   Future<void> createTask(TaskModel task) async {
-    await firestore.collection('tasks').add(task.toJson());
+    try {
+      await firestore.collection('tasks').add(task.toJson());
+    } on FirebaseException catch (error) {
+      throw DataException(
+        message: error.message ?? 'Failed to create task',
+        code: error.code,
+      );
+    }
   }
 
   @override
