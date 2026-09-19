@@ -1,10 +1,22 @@
 # Flutter Clean Architecture Template
 
-> **Note**: This repository is intentionally small. The domain is simple so the focus stays on architecture, dependency boundaries, error handling, and testing.
+[![Flutter CI](https://github.com/Satti201/flutter-clean-architecture-template/actions/workflows/flutter_ci.yml/badge.svg)](https://github.com/Satti201/flutter-clean-architecture-template/actions/workflows/flutter_ci.yml)
 
-A small Flutter task-management app built to demonstrate practical Clean Architecture, dependency inversion, Riverpod state management, Firebase integration, error translation, and unit testing.
+A focused Flutter reference project demonstrating Clean Architecture, Riverpod, Firebase/Firestore, repository boundaries, dependency injection, error translation, and automated testing.
 
-The goal of this repository is not to showcase a complex product. It is to show how I structure Flutter applications so business logic stays independent from frameworks and infrastructure.
+> Intentionally small domain. The goal is architecture clarity, not feature count.
+
+---
+
+## Engineering Highlights
+
+- Domain layer independent of Flutter and Firebase
+- Repository contract defined in the domain layer
+- Firebase isolated behind a remote data source
+- Explicit infrastructure → domain error translation
+- Manual dependency composition
+- Separate list and mutation state
+- 14 automated tests
 
 ---
 
